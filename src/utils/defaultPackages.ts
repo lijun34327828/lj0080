@@ -67,6 +67,12 @@ export const createDefaultPackages = (): RentalPackage[] => [
     enabled: true,
     promoText: '深夜时段（18:00-22:00）再享0.75折',
     promoTextStyle: defaultPromoStyle('#6366F1'),
+    groupBillingMode: 'per-person',
+    groupDiscountTiers: [
+      { threshold: 3, rate: 0.95 },
+      { threshold: 5, rate: 0.9 },
+      { threshold: 10, rate: 0.85 },
+    ],
     discountRules: [
       {
         id: uid(),
@@ -96,6 +102,11 @@ export const createDefaultPackages = (): RentalPackage[] => [
     enabled: true,
     promoText: '💎 包月最超值！赠3人同行再享满600减100',
     promoTextStyle: { fontSize: 15, color: '#F59E0B', fontWeight: 900, underline: true, strikethrough: false, glow: true },
+    groupBillingMode: 'flat',
+    groupDiscountTiers: [
+      { threshold: 3, rate: 0.95 },
+      { threshold: 5, rate: 0.88 },
+    ],
     discountRules: [
       {
         id: uid(),

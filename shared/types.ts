@@ -22,6 +22,13 @@ export interface TextStyleConfig {
   glow: boolean
 }
 
+export type GroupBillingMode = 'per-person' | 'flat'
+
+export interface GroupDiscountTier {
+  threshold: number
+  rate: number
+}
+
 export interface RentalPackage {
   id: string
   type: PackageType
@@ -35,6 +42,8 @@ export interface RentalPackage {
   promoTextStyle: TextStyleConfig
   priority: number
   enabled: boolean
+  groupBillingMode?: GroupBillingMode
+  groupDiscountTiers?: GroupDiscountTier[]
 }
 
 export interface CalculateRequest {

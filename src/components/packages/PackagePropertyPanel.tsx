@@ -1,7 +1,7 @@
-import type { RentalPackage, DiscountRule } from '../../../shared/types'
+import type { RentalPackage, DiscountRule, GroupBillingMode, GroupDiscountTier } from '../../../shared/types'
 import { packageTypeMeta } from '../../utils/formatters'
 import { cn } from '../../lib/utils'
-import { Layers3, Tag, Clock, Percent, Sparkles, MousePointerClick } from 'lucide-react'
+import { Layers3, Tag, Clock, Percent, Sparkles, MousePointerClick, Users, Plus, Trash2 } from 'lucide-react'
 import DiscountRuleEditor from '../discount/DiscountRuleEditor'
 import TextStyleEditor from '../discount/TextStyleEditor'
 
@@ -166,6 +166,114 @@ export default function PackagePropertyPanel({
           </div>
         </Section>
 
+        <Section icon={<Users className="h-4 w-4" />} title="团体计费" accent="violet">
+          <div className="space-y-4">
+            <Field label="计费方式">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => onUpdate(pkg.id, { groupBillingMode: 'per-person' })}
+                  className={cn(
+                    'flex-1 rounded-lg border px-3.5 py-2.5 text-sm font-medium transition-all text-left',
+                    pkg.groupBillingMode === 'per-person'
+                      ? 'border-violet-400 bg-violet-50 text-violet-700 ring-2 ring-violet-100'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:bg-violet-50/50'
+                  )}
+                >
+                  每人单价叠加
+                  <p className="text-[11px] mt-0.5 opacity-70 font-normal">基础价 × 人数</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onUpdate(pkg.id, { groupBillingMode: 'flat' })}
+                  className={cn(
+                    'flex-1 rounded-lg border px-3.5 py-2.5 text-sm font-medium transition-all text-left',
+                    pkg.groupBillingMode === 'flat'
+                      ? 'border-violet-400 bg-violet-50 text-violet-700 ring-2 ring-violet-100'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:bg-violet-50/50'
+                  )}
+                >
+                  整单价格不变
+                  <p className="text-[11px] mt-0.5 opacity-70 font-normal">不随人数变化</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onUpdate(pkg.id, { groupBillingMode: undefined, groupDiscountTiers: undefined })}
+                  className={cn(
+                    'flex-1 rounded-lg border px-3.5 py-2.5 text-sm font-medium transition-all text-left',
+                    !pkg.groupBillingMode
+                      ? 'border-violet-400 bg-violet-50 text-violet-700 ring-2 ring-violet-100'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-violet-200 hover:bg-violet-50/50'
+                  )}
+                >
+                  未设置
+                  <p className="text-[11px] mt-0.5 opacity-70 font-normal">不启用团体计费</p>
+                </button>
+              </div>
+            </Field>
+
+            {pkg.groupBillingMode && (
+              <Field label="团体折扣阶梯">
+                <div className="space-y-2">
+                  {(pkg.groupDiscountTiers ?? []).map((tier, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500 shrink-0 w-14">≥</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={tier.threshold}
+                        onChange={(e) => {
+                          const tiers = [...(pkg.groupDiscountTiers ?? [])]
+                          tiers[idx] = { ...tiers[idx], threshold: Math.max(1, Number(e.target.value) || 1) }
+                          onUpdate(pkg.id, { groupDiscountTiers: tiers })
+                        }}
+                        className="w-20 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 tabular-nums"
+                        placeholder="人数"
+                      />
+                      <span className="text-xs text-slate-500 shrink-0">人，折扣率</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={tier.rate}
+                        onChange={(e) => {
+                          const tiers = [...(pkg.groupDiscountTiers ?? [])]
+                          tiers[idx] = { ...tiers[idx], rate: Math.min(1, Math.max(0, Number(e.target.value) || 0)) }
+                          onUpdate(pkg.id, { groupDiscountTiers: tiers })
+                        }}
+                        className="w-24 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 tabular-nums"
+                        placeholder="0.90"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const tiers = (pkg.groupDiscountTiers ?? []).filter((_, i) => i !== idx)
+                          onUpdate(pkg.id, { groupDiscountTiers: tiers.length > 0 ? tiers : undefined })
+                        }}
+                        className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tiers = [...(pkg.groupDiscountTiers ?? []), { threshold: 3, rate: 0.95 }]
+                      onUpdate(pkg.id, { groupDiscountTiers: tiers })
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 px-3 py-2 text-xs font-medium text-slate-500 hover:border-violet-300 hover:bg-violet-50/50 hover:text-violet-600 transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    添加阶梯
+                  </button>
+                </div>
+              </Field>
+            )}
+          </div>
+        </Section>
+
         <Section icon={<Sparkles className="h-4 w-4" />} title="优惠文案与样式" accent="rose">
           <div className="space-y-4">
             <Field label="优惠文案">
@@ -198,13 +306,14 @@ function Section({
 }: {
   icon: React.ReactNode
   title: string
-  accent: 'slate' | 'sky' | 'amber' | 'rose'
+  accent: 'slate' | 'sky' | 'amber' | 'violet' | 'rose'
   children: React.ReactNode
 }) {
   const accentClasses: Record<string, string> = {
     slate: 'bg-slate-500',
     sky: 'bg-sky-500',
     amber: 'bg-amber-500',
+    violet: 'bg-violet-500',
     rose: 'bg-rose-500',
   }
 

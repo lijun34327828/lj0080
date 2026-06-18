@@ -8,7 +8,7 @@ import type {
 } from '../../shared/types.js'
 
 export function calculatePricing(request: CalculateRequest): CalculateResponse {
-  const { rentalHours, startHour = 9, packages } = request
+  const { rentalHours, startHour = 9, peopleCount = 1, packages } = request
   const breakdown: CalculationBreakdown[] = []
 
   const enabledPackages = packages.filter(p => p.enabled)
@@ -57,7 +57,17 @@ export function calculatePricing(request: CalculateRequest): CalculateResponse {
   })
 
   let currentAmount = matched.basePrice
-  const originalPrice = matched.basePrice
+
+  if (matched.groupBillingMode === 'per-person' && peopleCount > 1) {
+    currentAmount = matched.basePrice * peopleCount
+    breakdown.push({
+      step: '多人计费',
+      amount: currentAmount,
+      description: `按人数计费：¥${matched.basePrice} × ${peopleCount}人 = ¥${currentAmount}`,
+    })
+  }
+
+  const originalPrice = currentAmount
 
   for (const rule of matched.discountRules) {
     const result = applyDiscountRule(rule, currentAmount, rentalHours, startHour)
@@ -67,6 +77,21 @@ export function calculatePricing(request: CalculateRequest): CalculateResponse {
         step: rule.name || rule.type,
         amount: result.amount,
         description: result.description,
+      })
+    }
+  }
+
+  if (matched.groupDiscountTiers && matched.groupDiscountTiers.length > 0 && peopleCount > 1) {
+    const sortedGroupTiers = [...matched.groupDiscountTiers].sort((a, b) => b.threshold - a.threshold)
+    const hitTier = sortedGroupTiers.find(t => peopleCount >= t.threshold)
+    if (hitTier) {
+      const beforeGroup = currentAmount
+      currentAmount = currentAmount * hitTier.rate
+      const groupSaved = beforeGroup - currentAmount
+      breakdown.push({
+        step: '团体折扣',
+        amount: currentAmount,
+        description: `团体折扣：${peopleCount}人≥${hitTier.threshold}人 触发折扣率 ${(hitTier.rate * 100).toFixed(0)}%，节省 ¥${groupSaved.toFixed(2)}`,
       })
     }
   }

@@ -112,7 +112,7 @@ export default function CalculationConsole({
         <div className="space-y-2.5">
           <div className="flex items-center gap-2 text-sm text-ink-200/70">
             <Users className="w-3.5 h-3.5" />
-            <span>人数（预留）</span>
+            <span>人数</span>
           </div>
           <div className="relative">
             <input
