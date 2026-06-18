@@ -228,34 +228,49 @@ function SuccessView({ result }: { result: CalculateResponse }) {
           计费明细 Breakdown
         </div>
         <div className="space-y-1">
-          {result.breakdown.map((step, idx) => (
-            <div key={idx} className="flex gap-4 items-start group">
-              <div className="flex flex-col items-center">
-                <div className={cn(
-                  'w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold border-2 shrink-0 transition-all',
-                  idx === result.breakdown.length - 1
-                    ? 'bg-amber-500 text-ink-950 border-amber-400 shadow-glow-amber'
-                    : 'bg-white text-ink-600 border-ink-200'
-                )}>
-                  {step.step}
+          {result.breakdown.map((step, idx) => {
+            const delta = idx === 0 ? step.amount : step.amount - result.breakdown[idx - 1].amount
+            const isDiscount = delta < 0
+            const isIncrease = delta > 0 && idx > 0
+            return (
+              <div key={idx} className="flex gap-4 items-start group">
+                <div className="flex flex-col items-center">
+                  <div className={cn(
+                    'w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold border-2 shrink-0 transition-all',
+                    idx === result.breakdown.length - 1
+                      ? 'bg-amber-500 text-ink-950 border-amber-400 shadow-glow-amber'
+                      : 'bg-white text-ink-600 border-ink-200'
+                  )}>
+                    {idx + 1}
+                  </div>
+                  {idx < result.breakdown.length - 1 && (
+                    <div className="w-0.5 h-6 bg-gradient-to-b from-ink-300/80 to-ink-200/40 mt-0.5" />
+                  )}
                 </div>
-                {idx < result.breakdown.length - 1 && (
-                  <div className="w-0.5 h-6 bg-gradient-to-b from-ink-300/80 to-ink-200/40 mt-0.5" />
-                )}
+                <div className="flex-1 py-2 pb-1">
+                  <div className="text-sm font-semibold text-ink-800">{step.step}</div>
+                  <div className="text-xs text-ink-500/70 mt-0.5">{step.description}</div>
+                </div>
+                <div className="py-2 pb-1 shrink-0 text-right">
+                  <span className={cn(
+                    'font-mono font-bold text-sm',
+                    isDiscount
+                      ? 'text-green-600'
+                      : isIncrease
+                        ? 'text-rose-600'
+                        : 'text-ink-800'
+                  )}>
+                    {isDiscount
+                      ? `-${formatCurrency(Math.abs(delta))}`
+                      : isIncrease
+                        ? `+${formatCurrency(delta)}`
+                        : formatCurrency(delta)
+                    }
+                  </span>
+                </div>
               </div>
-              <div className="flex-1 py-2 pb-1">
-                <div className="text-sm font-semibold text-ink-800">{step.description}</div>
-              </div>
-              <div className="py-2 pb-1 shrink-0 text-right">
-                <span className={cn(
-                  'font-mono font-bold text-sm',
-                  step.amount > 0 ? 'text-rose-600' : step.amount < 0 ? 'text-green-600' : 'text-ink-500'
-                )}>
-                  {step.amount > 0 ? '+' : ''}{formatCurrency(step.amount)}
-                </span>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>
